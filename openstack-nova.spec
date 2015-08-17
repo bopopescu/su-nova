@@ -1,54 +1,54 @@
 %global with_doc %{!?_without_doc:1}%{?_without_doc:0}
+%global with_trans %{!?_without_trans:1}%{?_without_trans:0}
+
+%global release_name juno
+%global milestone rc2
+
 
 Name:             openstack-nova
-Version:          2014.1.1
-Release:          2%{?dist}
+Version: 	  2014.2.1
+Release:          1%{?dist}
 Summary:          OpenStack Compute (nova)
 
 Group:            Applications/System
 License:          ASL 2.0
 URL:              http://openstack.org/projects/compute/
-Source0:          https://launchpad.net/nova/icehouse/%{version}/+download/nova-%{version}.tar.gz
-
+Source0:          http://launchpad.net/nova/%{release_name}/%{version}/+download/nova-%{version}.tar.gz
 Source1:          nova-dist.conf
 Source2:          nova.conf.sample
 Source6:          nova.logrotate
-
 Source10:         openstack-nova-api.init
-Source100:        openstack-nova-api.upstart
 Source11:         openstack-nova-cert.init
-Source110:        openstack-nova-cert.upstart
 Source12:         openstack-nova-compute.init
-Source120:        openstack-nova-compute.upstart
 Source13:         openstack-nova-network.init
-Source130:        openstack-nova-network.upstart
 Source14:         openstack-nova-objectstore.init
-Source140:        openstack-nova-objectstore.upstart
 Source15:         openstack-nova-scheduler.init
-Source150:        openstack-nova-scheduler.upstart
 Source16:         openstack-nova-conductor.init
-Source160:        openstack-nova-conductor.upstart
 Source18:         openstack-nova-xvpvncproxy.init
-Source180:        openstack-nova-xvpvncproxy.upstart
 Source19:         openstack-nova-console.init
-Source190:        openstack-nova-console.upstart
-Source24:         openstack-nova-consoleauth.init
-Source240:        openstack-nova-consoleauth.upstart
-Source25:         openstack-nova-metadata-api.init
-Source250:        openstack-nova-metadata-api.upstart
-Source26:         openstack-nova-cells.init
-Source260:        openstack-nova-cells.upstart
-Source27:         openstack-nova-spicehtml5proxy.init
-Source270:        openstack-nova-spicehtml5proxy.upstart
-Source28:         openstack-nova-novncproxy.init
-Source280:        openstack-nova-novncproxy.upstart
-
 Source20:         nova-sudoers
-
 Source21:         nova-polkit.pkla
 Source22:         nova-ifc-template
-
+Source24:         openstack-nova-consoleauth.init
+Source25:         openstack-nova-metadata-api.init
+Source26:         openstack-nova-cells.init
+Source27:         openstack-nova-spicehtml5proxy.init
+Source28:         openstack-nova-novncproxy.init
 Source30:         openstack-nova-novncproxy.sysconfig
+Source100:        openstack-nova-api.upstart
+Source110:        openstack-nova-cert.upstart
+Source120:        openstack-nova-compute.upstart
+Source130:        openstack-nova-network.upstart
+Source140:        openstack-nova-objectstore.upstart
+Source150:        openstack-nova-scheduler.upstart
+Source160:        openstack-nova-conductor.upstart
+Source180:        openstack-nova-xvpvncproxy.upstart
+Source190:        openstack-nova-console.upstart
+Source240:        openstack-nova-consoleauth.upstart
+Source250:        openstack-nova-metadata-api.upstart
+Source260:        openstack-nova-cells.upstart
+Source270:        openstack-nova-spicehtml5proxy.upstart
+Source280:        openstack-nova-novncproxy.upstart
 
 #
 # patches_base=2014.1.1
@@ -56,9 +56,9 @@ Source30:         openstack-nova-novncproxy.sysconfig
 #Patch0001: 0001-Ensure-we-don-t-access-the-net-when-building-docs.patch
 #Patch0002: 0002-remove-runtime-dep-on-python-pbr.patch
 #Patch0003: 0003-Revert-Replace-oslo.sphinx-with-oslosphinx.patch
-#Patch0004: 0004-notify-calling-process-we-are-ready-to-serve.patch
 #Patch0005: 0005-Move-notification-point-to-a-better-place.patch
-#Patch0006: 0006-Set-the-volume-access-mode-during-volume-attach.patch
+#Patch0006: MIRA-oslosphinx-with-oslo.sphinx.replacement.patch
+#Patch0007:  MIRA0007-Adjust-kombu-version-in-requirements.txt.patch
 
 # This is EPEL specific and not upstream
 
@@ -66,6 +66,7 @@ BuildArch:        noarch
 BuildRequires:    intltool
 BuildRequires:    python-sphinx >= 1.1.2
 BuildRequires:    python-oslo-sphinx
+BuildRequires:    python-oslo-i18n
 BuildRequires:    python-setuptools
 BuildRequires:    python-netaddr
 BuildRequires:    openstack-utils
@@ -74,10 +75,11 @@ BuildRequires:    python-d2to1
 BuildRequires:    python-six
 # These are required to build due to the requirements check added
 BuildRequires:    python-paste-deploy >= 1.5.0
-BuildRequires:    python-routes >= 1.12
-BuildRequires:    python-sqlalchemy >= 0.7.8
+BuildRequires:    python-routes >= 1.12.3
+BuildRequires:    python-sqlalchemy >= 0.9.7
 BuildRequires:    python-webob >= 1.2.3
-BuildRequires:    python-jinja2 >= 2.6
+BuildRequires:    python-jinja2
+BuildRequires:    python-babel >= 1.3
 
 Requires:         openstack-nova-compute = %{version}-%{release}
 Requires:         openstack-nova-cert = %{version}-%{release}
@@ -105,10 +107,12 @@ standard hardware configurations and seven major hypervisors.
 Summary:          Components common to all OpenStack Nova services
 Group:            Applications/System
 
+Requires:         lshell
 Requires:         python-nova = %{version}-%{release}
-Requires:         python-keystoneclient
-Requires:         python-oslo-rootwrap
-Requires:         python-oslo-messaging >= 1.3.0-0.1.a4
+Requires:         python-keystoneclient >= 1:0.10.0
+Requires:         python-oslo-rootwrap >= 1.3.0
+Requires:         python-oslo-messaging >= 1.4.0
+Requires:         python-oslo-serialization >= 1.0.0
 
 Requires(post):   chkconfig
 Requires(postun): initscripts
@@ -152,10 +156,11 @@ Requires:         libvirt-python
 Requires:         openssh-clients
 Requires:         rsync
 Requires:         lvm2
-Requires:         python-cinderclient
+Requires:         python-cinderclient >= 1.1.0
 Requires(pre):    qemu-kvm
 Requires:         genisoimage
 Requires:         bridge-utils
+Requires:         conntrack-tools
 
 %description compute
 OpenStack Compute (codename Nova) is open source software designed to
@@ -241,6 +246,7 @@ This package contains the Nova service for managing certificates.
 Summary:          OpenStack Nova API services
 Group:            Applications/System
 
+Requires:         fping
 Requires:         openstack-nova-common = %{version}-%{release}
 
 %description api
@@ -298,7 +304,7 @@ Summary:          OpenStack Nova console access services
 Group:            Applications/System
 
 Requires:         openstack-nova-common = %{version}-%{release}
-Requires:         python-websockify
+Requires:         python-websockify >= 0.6.0
 
 %description console
 OpenStack Compute (codename Nova) is open source software designed to
@@ -329,7 +335,7 @@ through users and projects. OpenStack Compute strives to be both
 hardware and hypervisor agnostic, currently supporting a variety of
 standard hardware configurations and seven major hypervisors.
 
-This package contains the Nova Cells service providing additional 
+This package contains the Nova Cells service providing additional
 scaling and (geographic) distribution for compute services.
 
 %package novncproxy
@@ -338,7 +344,7 @@ Group:            Applications/System
 
 Requires:         openstack-nova-common = %{version}-%{release}
 Requires:         novnc
-Requires: 	  python-websockify
+Requires:         python-websockify >= 0.6.0
 
 
 %description novncproxy
@@ -351,7 +357,7 @@ through users and projects. OpenStack Compute strives to be both
 hardware and hypervisor agnostic, currently supporting a variety of
 standard hardware configurations and seven major hypervisors.
 
-This package contains the Nova noVNC Proxy service that can proxy 
+This package contains the Nova noVNC Proxy service that can proxy
 VNC traffic over browser websockets connections.
 
 %package -n       python-nova
@@ -361,44 +367,58 @@ Group:            Applications/System
 Requires:         openssl
 # Require openssh for ssh-keygen
 Requires:         openssh
+Requires:         MySQL-python
+Requires:         python-amqplib
+Requires:         python-anyjson >= 0.3.3
+Requires:         python-argparse
+Requires:         python-babel >= 1.3
+Requires:         python-boto >= 2.32.1
+Requires:         python-cheetah
+Requires:         python-cinderclient >= 1.1.0
+Requires:         python-decorator >= 3.4.0
+Requires:         python-eventlet >= 0.15.1
+Requires:         python-glanceclient >= 1:0.14.0
+Requires:         python-greenlet >= 0.3.2
+Requires:         python-iso8601 >= 0.1.9
+Requires:         python-jinja2
+Requires:         python-jsonschema >= 2.0.0
+Requires:         python-keystoneclient >= 1:0.10.0
+Requires:         python-keystonemiddleware >= 1.0.0
+Requires:         python-kombu >= 3.0.7
+Requires:         python-ldap
+Requires:         python-lockfile >= 0.8
+Requires:         python-lxml >= 2.3
+Requires:         python-memcached
+Requires:         python-migrate == 0.9.1
+Requires:         python-netaddr >= 0.7.12
+Requires:         python-neutronclient >= 2.3.6
+Requires:         python-novaclient >= 1:2.20.0
+Requires:         python-oslo-config >= 1.4.0
+Requires:         python-oslo-i18n >= 1.0.0
+Requires:         python-oslo-messaging >= 1.4.0
+Requires:         python-oslo-rootwrap >= 1.3.0
+Requires:         python-oslo-vmware >= 0.6.0
+Requires:         python-oslo.db >= 1.0.0
+Requires:         python-paramiko >= 1.13.0
+Requires:         python-paste
+Requires:         python-paste-deploy >= 1.5.0
+Requires:         python-pbr >= 0.6
+Requires:         python-posix_ipc
+Requires:         python-pyasn1
+Requires:         python-pycadf >= 0.6.0
+Requires:         python-qpid
+Requires:         python-rfc3986 >= 0.2.0
+Requires:         python-routes >= 1.12.3
+Requires:         python-simplejson >= 2.2.0
+Requires:         python-six >= 1.7.0
+Requires:         python-sqlalchemy >= 0.9.7
+Requires:         python-stevedore >= 1.0.0
+Requires:         python-suds >= 0.4
+Requires:         python-webob >= 1.2.3
+Requires:         python-websockify >= 0.6.0
+Requires:         python-wsgiref >= 0.1.2
 Requires:         sudo
 
-Requires:         MySQL-python
-
-Requires:         python-paramiko
-
-Requires:         python-qpid
-Requires:         python-kombu
-Requires:         python-amqplib
-
-Requires:         python-eventlet
-Requires:         python-greenlet
-Requires:         python-iso8601
-Requires:         python-netaddr
-Requires:         python-lxml
-Requires:         python-anyjson
-Requires:         python-boto
-Requires:         python-cheetah
-Requires:         python-ldap
-Requires:         python-stevedore
-
-Requires:         python-memcached
-
-Requires:         python-sqlalchemy >= 0.7.8
-Requires:         python-migrate
-
-Requires:         python-paste-deploy >= 1.5
-Requires:         python-routes >= 1.12
-Requires:         python-webob >= 1.2.3
-
-Requires:         python-glanceclient >= 1:0
-Requires:         python-neutronclient
-Requires:         python-novaclient
-Requires:         python-oslo-config >= 1:1.2.0
-Requires:         python-pyasn1
-Requires:         python-six >= 1.4.1
-Requires:         python-babel
-Requires:         python-jinja2 >= 2.6
 
 %description -n   python-nova
 OpenStack Compute (codename Nova) is open source software designed to
@@ -434,9 +454,9 @@ This package contains documentation files for nova.
 #%patch0001 -p1
 #%patch0002 -p1
 #%patch0003 -p1
-#%patch0004 -p1
 #%patch0005 -p1
 #%patch0006 -p1
+#%patch0007 -p1
 
 # Apply EPEL patch
 
@@ -601,7 +621,17 @@ rm -f %{buildroot}/usr/share/doc/nova/README*
 %pre common
 getent group nova >/dev/null || groupadd -r nova --gid 162
 if ! getent passwd nova >/dev/null; then
-  useradd -u 162 -r -g nova -G nova,nobody -d %{_sharedstatedir}/nova -s /sbin/nologin -c "OpenStack Nova Daemons" nova
+  useradd -u 162 -r -g nova -G nova,nobody -d %{_sharedstatedir}/nova -s /usr/bin/lshell -c "OpenStack Nova Daemons" nova
+  usermod -aG lshell nova
+fi
+if [ -f /etc/lshell.conf ]
+then
+    grep -P '^\[nova\]$' /etc/lshell.conf >/dev/null 2>&1 || cat >> /etc/lshell.conf <<'EOF'
+[nova]
+overssh         : ['ls','touch','mkdir','rm','scp']
+strict          : 1
+home_path       : '/var/lib/nova'
+EOF
 fi
 exit 0
 
@@ -794,9 +824,12 @@ fi
 %dir %attr(0755, nova, root) %{_localstatedir}/log/nova
 %dir %attr(0755, nova, root) %{_localstatedir}/run/nova
 
-%{_bindir}/nova-clear-rabbit-queues
+#%{_bindir}/nova-clear-rabbit-queues
 %{_bindir}/nova-manage
 %{_bindir}/nova-rootwrap
+
+%{_bindir}/nova-idmapshift
+%{_bindir}/nova-serialproxy
 
 %exclude %{_datarootdir}/nova/*.upstart
 %{_datarootdir}/nova
@@ -902,8 +935,25 @@ fi
 %endif
 
 %changelog
-* Fri Jun 27 2014 Vladan Popovic <vpopovic@redhat.com> 2014.1.1-2
-- Fixes rbd backend image size - rhbz#1112871
+* Thu May 07 2015 mos-infra-ci <mos-infra-ci@review.fuel-infra.org> - 2014.2.2-fuel6.1.mira19
+- f0b1fee Merge "Fix a rare issue in service state reporting" into openstack-ci/fuel-6.1/2014.2
+- 993a018 Fix a rare issue in service state reporting
+- 24c60d1 Fix detach_sriov_ports to get context to be able to get image metadata
+- 94a43b3 Fix test_version_string_with_package_is_good for pbr 0.11
+- 8038494 Prevent scheduling new external events when compute is shutdown
+- 895090b Cancel all waiting events during compute node shutdown
+- 4e15159 Merge "Fixed nova-network dhcp-hostsfile update during live-migration" into openstack-ci/fuel-6.1/2014.2
+- 193735c Fixed nova-network dhcp-hostsfile update during live-migration
+- 60160d3 Forbid booting of QCOW2 images with virtual_size > root_gb
+- 0608948 Fixed incorrect dhcp_server value during nova-network creation
+
+* Fri Mar 20 2015 Ivan Udovichenko <iudovichenko@mirantis.com> - 2014.2.2
+- Add patch [1], to adjust "kombu" version in requirements.txt [2]
+  [1] MIRA0007-Adjust-kombu-version-in-requirements.txt.patch
+  [2] https://bugs.launchpad.net/fuel/+bug/1434093
+
+* Fri Mar 06 2015 Daniil Trishkin <dtrishkin@mirantis.com> - 2014.2.2
+- Update to upstream 2014.2.2
 
 * Fri Jun 13 2014 Nikola Đipanov <ndipanov@redhat.com> 2014.1.1-1
 - Update to latest stable/icehouse 2014.1.1 release
@@ -1393,3 +1443,4 @@ fi
 * Wed Jun 29 2011 Matt Domsch <mdomsch@fedoraproject.org> - 2011.3-1087.1
 - Initial package from Alexander Sakhnov <asakhnov@mirantis.com>
   with cleanups by Matt Domsch
+
